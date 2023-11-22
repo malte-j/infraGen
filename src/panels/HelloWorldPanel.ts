@@ -1,6 +1,19 @@
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn, workspace } from "vscode";
+import {
+  Disposable,
+  Webview,
+  WebviewPanel,
+  window,
+  Uri,
+  ViewColumn,
+  workspace,
+  WorkspaceEdit,
+  Range,
+} from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
+import { generateDiagram, getUpdatedTFFile } from "../ai/openai";
+import { fstat, writeFile, writeFileSync } from "fs";
+import { exec } from "child_process";
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -55,7 +68,7 @@ export class HelloWorldPanel {
         // Panel title
         "Infragen",
         // The editor column the panel should be displayed in
-        ViewColumn.One,
+        ViewColumn.Two,
         // Extra panel configurations
         {
           // Enable JavaScript in the webview
@@ -64,6 +77,7 @@ export class HelloWorldPanel {
           localResourceRoots: [
             Uri.joinPath(extensionUri, "out"),
             Uri.joinPath(extensionUri, "webview-ui/build"),
+            Uri.joinPath(Uri.file("/tmp/infragen")),
           ],
         }
       );
@@ -116,7 +130,6 @@ export class HelloWorldPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
           <title>Hello World</title>
         </head>
@@ -145,7 +158,7 @@ export class HelloWorldPanel {
           case "userChatMessage":
             // get all .tf files in the workspace
             const mainTfFile = await workspace.findFiles("**/main.tf");
-            if(!mainTfFile[0]) {
+            if (!mainTfFile[0]) {
               window.showInformationMessage("No main.tf file found");
               return;
             } else {
@@ -154,10 +167,28 @@ export class HelloWorldPanel {
               // get text from main.tf file
               const document = await workspace.openTextDocument(mainTfFile[0]);
               let t = document.getText();
-              // send text to webview
-              webview.postMessage({ command: "text", text: t });
-              window.showInformationMessage(t);
-              
+
+              const modifiedTfFile = await getUpdatedTFFile(t, text);
+
+              // modifiedTfFile to main.tf file
+              const edit = new WorkspaceEdit();
+              edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile);
+              await workspace.applyEdit(edit).then((success) => {
+                if (!success) return;
+
+                // save the file
+                document.save().then((d) => {
+                  // execute terminal command using child_process
+                  exec(
+                    `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | dot -Tpng > /tmp/infragen/graph.png`,
+                    () => {
+                      const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+                      const webviewUri = webview.asWebviewUri(onDiskPath);
+                      webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
+                    }
+                  );
+                });
+              });
             }
             break;
         }
