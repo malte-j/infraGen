@@ -1,9 +1,29 @@
+* {
+  box-sizing: border-box;
+}
+
 main {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  padding: 8px;
+}
+
+.diagram {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAaSURBVHgB7cAxAQAAAIIw+zckjYbwZQEa6TcaqgOLkWukagAAAABJRU5ErkJggg==");
+  border: 1px solid #e2e4e8;
+  flex: 1 1 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  height: 100%;
+  margin-bottom: 16px;
+}
+
+.diagram img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
 }
 
 .spinner {

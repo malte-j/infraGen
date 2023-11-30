@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 const openai = new OpenAI({
-  apiKey: "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",
+  apiKey: "",
 });
 
 export async function getUpdatedTFFile(tfFile: string, command: string) {
@@ -41,7 +41,7 @@ export async function generateDiagram(tfFile: string) {
         role: "system",
         content: `Available imports: from diagrams.aws.compute import EC2Instance
         from diagrams.aws.database import RDSInstance
-        from diagrams.aws.storage import SimpleStorageServiceS3Bucket as S3Bucket`
+        from diagrams.aws.storage import SimpleStorageServiceS3Bucket as S3Bucket`,
       },
       {
         role: "user",

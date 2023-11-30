@@ -162,8 +162,6 @@ export class HelloWorldPanel {
               window.showInformationMessage("No main.tf file found");
               return;
             } else {
-              window.showInformationMessage(mainTfFile[0].path);
-
               // get text from main.tf file
               const document = await workspace.openTextDocument(mainTfFile[0]);
               let t = document.getText();
@@ -180,7 +178,7 @@ export class HelloWorldPanel {
                 document.save().then((d) => {
                   // execute terminal command using child_process
                   exec(
-                    `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | dot -Tpng > /tmp/infragen/graph.png`,
+                    `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
                     () => {
                       const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
                       const webviewUri = webview.asWebviewUri(onDiskPath);

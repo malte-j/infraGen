@@ -40,18 +40,16 @@ function App() {
   }, []);
 
   return (
-    <main>
-      <pre>{updatedFile}</pre>
-      {
-        // Show loading indicator
-        isLoading && (
+    <main className="main">
+      <div className="diagram">
+        {isLoading ? (
           <div className="loading">
             <div className="spinner"></div>
           </div>
-        )
-      }
-
-      {diagramUri && <img src={diagramUri} width="300" />}
+        ) : (
+          diagramUri && <img src={diagramUri} width="300" />
+        )}
+      </div>
 
       <VSCodeTextArea
         value={chatInput}
