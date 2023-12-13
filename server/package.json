@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "uvicorn main:app --reload"
+    "dev": "uvicorn main:app --reload",
+    "d": "(source ~/.zshrc && conda activate infragen && uvicorn main:app --reload)"
   },
   "keywords": [],
   "author": "",
