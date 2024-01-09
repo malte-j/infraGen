@@ -41,6 +41,19 @@ class CreateThreadResponse(BaseModel):
 @app.post("/createThread")
 async def createThread() -> CreateThreadResponse:
     thread = client.beta.threads.create()
+
+    # submit the base message containing the tf file in the future
+    tf_file_message = client.beta.threads.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content="<begin_terraform_file>\n<end_terraform_file>",
+    )
+
+    # update the thread metadata with the tf file message id
+    client.beta.threads.update(
+        thread.id, metadata={"tf_file_message": tf_file_message.id}
+    )
+
     return CreateThreadResponse(threadId=thread.id)
 
 
@@ -89,6 +102,26 @@ def pollForToolUsage(threadId: str, runId: str):
 async def submitMessage(
     request: SubmitMessageRequest, background_tasks: BackgroundTasks
 ) -> None:
+    
+    # update the tf file if it was provided
+    if request.tfFile:
+        thread = client.beta.threads.retrieve(thread_id=request.threadId)
+        if thread.metadata:
+            tf_file_message_id = thread.metadata.tf_file_message # type: ignore
+
+            if tf_file_message_id:
+                client.beta.threads.messages.u pdate(
+                    thread_id=request.threadId,
+                    message_id=tf_file_message_id,
+
+                )
+
+            
+            client.beta.threads.messages.update(thread_id=, content=request.tfFile)    
+        
+
+
+
     client.beta.threads.messages.create(
         thread_id=request.threadId,
         role="user",

@@ -6,14 +6,11 @@ import {
   Uri,
   ViewColumn,
   workspace,
-  WorkspaceEdit,
-  Range,
+  Memento,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { generateDiagram, getUpdatedTFFile } from "../ai/openai";
-import { fstat, writeFile, writeFileSync } from "fs";
-import { exec } from "child_process";
+import { createThread, getMessages, submitMessage } from "../ai/agents";
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -27,6 +24,7 @@ import { exec } from "child_process";
  */
 export class HelloWorldPanel {
   public static currentPanel: HelloWorldPanel | undefined;
+  private static currentWorkspaceState: Memento | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
@@ -56,7 +54,7 @@ export class HelloWorldPanel {
    *
    * @param extensionUri The URI of the directory containing the extension.
    */
-  public static render(extensionUri: Uri) {
+  public static render(extensionUri: Uri, workspaceState: Memento) {
     if (HelloWorldPanel.currentPanel) {
       // If the webview panel already exists reveal it
       HelloWorldPanel.currentPanel._panel.reveal(ViewColumn.One);
@@ -83,6 +81,7 @@ export class HelloWorldPanel {
       );
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
+      HelloWorldPanel.currentWorkspaceState = workspaceState;
     }
   }
 
@@ -91,6 +90,7 @@ export class HelloWorldPanel {
    */
   public dispose() {
     HelloWorldPanel.currentPanel = undefined;
+    HelloWorldPanel.currentWorkspaceState = undefined;
 
     // Dispose of the current webview panel
     this._panel.dispose();
@@ -153,6 +153,7 @@ export class HelloWorldPanel {
       async (message: any) => {
         const command = message.command;
         const text = message.text;
+        const state = HelloWorldPanel.currentWorkspaceState;
 
         switch (command) {
           case "userChatMessage":
@@ -164,30 +165,54 @@ export class HelloWorldPanel {
             } else {
               // get text from main.tf file
               const document = await workspace.openTextDocument(mainTfFile[0]);
-              let t = document.getText();
+              let tfFileContent = document.getText();
 
-              const modifiedTfFile = await getUpdatedTFFile(t, text);
+              // update globalState
+              const state = HelloWorldPanel.currentWorkspaceState;
 
-              // modifiedTfFile to main.tf file
-              const edit = new WorkspaceEdit();
-              edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile);
-              await workspace.applyEdit(edit).then((success) => {
-                if (!success) return;
+              let threadId: string | undefined = state?.get("threadId");
 
-                // save the file
-                document.save().then((d) => {
-                  // execute terminal command using child_process
-                  exec(
-                    `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
-                    () => {
-                      const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
-                      const webviewUri = webview.asWebviewUri(onDiskPath);
-                      webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
-                    }
-                  );
-                });
-              });
+              // if no thread exists, create one
+              if (!threadId) {
+                threadId = await createThread();
+                state?.update("threadId", threadId);
+              }
+
+              // submit message to thread
+              submitMessage(threadId, text, tfFileContent);
+
+              // // modifiedTfFile to main.tf file
+              // const edit = new WorkspaceEdit();
+              // edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile);
+              // await workspace.applyEdit(edit).then((success) => {
+              //   if (!success) return;
+
+              //   // save the file
+              //   document.save().then((d) => {
+              //     // execute terminal command using child_process
+              //     exec(
+              //       `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
+              //       () => {
+              //         const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+              //         const webviewUri = webview.asWebviewUri(onDiskPath);
+              //         webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
+              //       }
+              //     );
+              //   });
+              // });
             }
+            break;
+          case "getMessages":
+            let threadId: string | undefined = state?.get("threadId");
+            if (!threadId) break;
+            // webview.postMessage({ command: "messages", threadId });
+
+            const messages = await getMessages(threadId);
+            webview.postMessage({ command: "messages", messages });
+            break;
+          case "newThread":
+            const newThreadId = await createThread();
+            state?.update("threadId", newThreadId);
             break;
         }
       },
