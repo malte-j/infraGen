@@ -4,14 +4,12 @@ load_dotenv(dotenv_path="../.env")
 
 
 from fastapi import FastAPI, BackgroundTasks
-from openai import Client
 from pydantic import BaseModel
 import lc_agent
 import redis
 
 r = redis.Redis(host="localhost", port=6379, decode_responses=True)
 
-client = Client()
 app = FastAPI()
 
 
