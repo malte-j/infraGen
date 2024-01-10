@@ -8,10 +8,10 @@ db = Chroma(embedding_function=OpenAIEmbeddings(), persist_directory="./chroma_d
 
 @tool
 def reference_code_search(query: str) -> str:
-    """Search for terraform best practice reference code."""
+    """Search for terraform best practice reference code from the AWS samples repository. If no results found is returned, stop using this function."""
     docs = db.similarity_search(query)
 
-    # if len(docs) > 0:
-    #     return docs[0].page_content
+    if len(docs) > 0:
+        return docs[0].page_content
 
     return "No results found"
