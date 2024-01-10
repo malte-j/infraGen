@@ -225,22 +225,12 @@ export class HelloWorldPanel {
               if (!success) return;
 
               // save the file
-              document.save().then((d) => {
-                // execute terminal command using child_process
-                // exec(
-                //   `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
-                //   () => {
-                //     const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
-                //     const webviewUri = webview.asWebviewUri(onDiskPath);
-                //     webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
-                //   }
-                // );
-              });
+              document.save()
             });
 
             webview.postMessage({ command: "tfFile", tfFile: modifiedTfFile.code });
           case "newThread":
-            const newThreadId = await createThread();
+            const newThreadId = createThread();
             state?.update("threadId", newThreadId);
             break;
         }

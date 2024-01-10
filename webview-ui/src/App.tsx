@@ -96,17 +96,11 @@ function App() {
 
   return (
     <main className="main">
-      <div className="diagram">
-        {isLoading ? (
-          <div className="loading">
-            <div className="spinner"></div>
-          </div>
-        ) : (
-          diagramUri && <img src={diagramUri} width="300" height="auto" />
-        )}
-      </div>
-
-      {/* {diagramUri} */}
+      {diagramUri && (
+        <div className="diagram">
+          <img src={diagramUri} width="300" height="auto" />
+        </div>
+      )}
 
       {messages.map((message) => (
         <div className="message" data-by={message.type}>
@@ -130,13 +124,8 @@ function App() {
         )}
       </div>
       <div className="buttons">
-        <VSCodeButton
-          onClick={handleNewThread}>
-          New Thread
-        </VSCodeButton>
-        <VSCodeButton
-          disabled={isLoading}
-          onClick={handleSendMessage}>
+        <VSCodeButton onClick={handleNewThread}>New Thread</VSCodeButton>
+        <VSCodeButton disabled={isLoading} onClick={handleSendMessage}>
           Send
         </VSCodeButton>
       </div>

@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-export async function createThread() {
+export function createThread() {
   return nanoid();
 }
 
