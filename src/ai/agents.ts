@@ -1,9 +1,7 @@
+import { nanoid } from "nanoid";
+
 export async function createThread() {
-  const res = await fetch("http://localhost:8000/createThread", {
-    method: "POST",
-  });
-  const { threadId } = await res.json();
-  return threadId as string;
+  return nanoid();
 }
 
 export function submitMessage(threadId: string, message: string, tfFile?: string) {
@@ -17,16 +15,19 @@ export function submitMessage(threadId: string, message: string, tfFile?: string
 export async function getMessages(threadId: string) {
   const res = await fetch(`http://localhost:8000/getMessages/${threadId}`);
 
-  const json = (await res.json()) as {
-    data: {
-      content: {
-        text: {
-          value: string;
-        };
-      }[];
-      role: "assistant" | "user";
-    }[];
-  };
+  console.log(res);
 
-  return json.data;
+  const json = (await res.json()) as any;
+
+  return json;
+}
+
+export async function getTfFile(threadId: string) {
+  const res = await fetch(`http://localhost:8000/getTfFile/${threadId}`);
+
+  console.log(res);
+
+  const json = (await res.json()) as any;
+
+  return json;
 }

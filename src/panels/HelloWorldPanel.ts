@@ -7,10 +7,13 @@ import {
   ViewColumn,
   workspace,
   Memento,
+  WorkspaceEdit,
+  Range,
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { createThread, getMessages, submitMessage } from "../ai/agents";
+import { createThread, getMessages, getTfFile, submitMessage } from "../ai/agents";
+import { exec } from "child_process";
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -153,63 +156,69 @@ export class HelloWorldPanel {
       async (message: any) => {
         const command = message.command;
         const text = message.text;
+
         const state = HelloWorldPanel.currentWorkspaceState;
+        let threadId: string | undefined = state?.get("threadId");
+        let mainTfFile = await workspace.findFiles("**/main.tf");
+        const document = await workspace.openTextDocument(mainTfFile[0]);
 
         switch (command) {
           case "userChatMessage":
             // get all .tf files in the workspace
-            const mainTfFile = await workspace.findFiles("**/main.tf");
+
             if (!mainTfFile[0]) {
               window.showInformationMessage("No main.tf file found");
               return;
-            } else {
-              // get text from main.tf file
-              const document = await workspace.openTextDocument(mainTfFile[0]);
-              let tfFileContent = document.getText();
-
-              // update globalState
-              const state = HelloWorldPanel.currentWorkspaceState;
-
-              let threadId: string | undefined = state?.get("threadId");
-
-              // if no thread exists, create one
-              if (!threadId) {
-                threadId = await createThread();
-                state?.update("threadId", threadId);
-              }
-
-              // submit message to thread
-              submitMessage(threadId, text, tfFileContent);
-
-              // // modifiedTfFile to main.tf file
-              // const edit = new WorkspaceEdit();
-              // edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile);
-              // await workspace.applyEdit(edit).then((success) => {
-              //   if (!success) return;
-
-              //   // save the file
-              //   document.save().then((d) => {
-              //     // execute terminal command using child_process
-              //     exec(
-              //       `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
-              //       () => {
-              //         const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
-              //         const webviewUri = webview.asWebviewUri(onDiskPath);
-              //         webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
-              //       }
-              //     );
-              //   });
-              // });
             }
+            // get text from main.tf file
+            let tfFileContent = document.getText();
+
+            // if no thread exists, create one
+            if (!threadId) {
+              threadId = await createThread();
+              state?.update("threadId", threadId);
+            }
+
+            // submit message to thread
+            submitMessage(threadId, text, tfFileContent);
+
             break;
           case "getMessages":
-            let threadId: string | undefined = state?.get("threadId");
             if (!threadId) break;
-            // webview.postMessage({ command: "messages", threadId });
 
             const messages = await getMessages(threadId);
             webview.postMessage({ command: "messages", messages });
             break;
+
+          case "getTfFile":
+            if (!threadId) break;
+            const modifiedTfFile = await getTfFile(threadId);
+
+            if (!mainTfFile[0]) {
+              window.showInformationMessage("No main.tf file found");
+              return;
+            }
+
+            const edit = new WorkspaceEdit();
+            edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile.code);
+            await workspace.applyEdit(edit).then((success) => {
+              if (!success) return;
+
+              // save the file
+              document.save().then((d) => {
+                // execute terminal command using child_process
+                exec(
+                  `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
+                  () => {
+                    const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+                    const webviewUri = webview.asWebviewUri(onDiskPath);
+                    webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
+                  }
+                );
+              });
+            });
+
+            webview.postMessage({ command: "tfFile", tfFile: modifiedTfFile.code });
           case "newThread":
             const newThreadId = await createThread();
             state?.update("threadId", newThreadId);

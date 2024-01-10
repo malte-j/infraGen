@@ -4,21 +4,25 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 
+interface Message {
+  type: "ai" | "user";
+  data: {
+    content: string;
+  };
+}
+
 function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [updatedFile, setUpdatedFile] = useState("");
   const [diagramUri, setDiagramUri] = useState("");
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState(
-    [] as {
-      content: {
-        text: {
-          value: string;
-        };
-      }[];
-      role: "assistant" | "user";
-    }[]
-  );
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    vscode.postMessage({
+      command: "getTfFile",
+    });
+  }, [messages]);
 
   function handleSendMessage() {
     setIsLoading(true);
@@ -56,15 +60,11 @@ function App() {
 
   useEffect(() => {
     // Handle messages sent from the extension to the webview
-
     const handleMessage = (event: MessageEvent<any>) => {
       setIsLoading(false);
       const message = event.data; // The json data that the extension sent
       switch (message.command) {
-        case "text":
-          // setChatInput(message.text);
-          break;
-        case "updatedFile":
+        case "tfFile":
           setUpdatedFile(message.text);
           break;
         case "diagram":
@@ -72,7 +72,14 @@ function App() {
           break;
         case "messages":
           console.log(message);
-          setMessages(message.messages);
+          setMessages(
+            message.messages
+              .map((message: string) => {
+                return JSON.parse(message) as Message;
+              })
+              .reverse()
+          );
+
           break;
       }
     };
@@ -96,16 +103,13 @@ function App() {
       {messages.map((message) => (
         <div
           style={{
-            background: message.role === "assistant" ? "#E1F8E1" : "#EAE0FF",
-            color: message.role === "assistant" ? "#08681C" : "#462093",
+            background: message.type === "ai" ? "#E1F8E1" : "#EAE0FF",
+            color: message.type === "ai" ? "#08681C" : "#462093",
             margin: "6px",
           }}>
-          {message.content.map((content) => (
-            <div>
-              {message.role}
-              <Markdown>{content.text.value}</Markdown>
-            </div>
-          ))}
+          <div>
+            <Markdown>{message.data.content}</Markdown>
+          </div>
         </div>
       ))}
       <VSCodeTextArea

@@ -5,12 +5,12 @@ export let extensionContext: ExtensionContext | null = null;
 
 export function activate(context: ExtensionContext) {
   // Create the show hello world command
-  const showHelloWorldCommand = commands.registerCommand("infragen.showPanel", () => {
+  const showPanelCommand = commands.registerCommand("infragen.showPanel", () => {
     HelloWorldPanel.render(context.extensionUri, context.workspaceState);
   });
 
   // Add command to the extension context
-  context.subscriptions.push(showHelloWorldCommand);
+  context.subscriptions.push(showPanelCommand);
 
   extensionContext = context;
 }
