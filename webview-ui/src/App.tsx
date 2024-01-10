@@ -135,7 +135,7 @@ function App() {
           New Thread
         </VSCodeButton>
         <VSCodeButton
-          disabled={isLoading || !chatInput}
+          disabled={isLoading}
           onClick={handleSendMessage}>
           Send
         </VSCodeButton>
