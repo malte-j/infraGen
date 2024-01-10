@@ -5,21 +5,22 @@
 main {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   padding: 8px;
 }
 
 .diagram {
-  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAaSURBVHgB7cAxAQAAAIIw+zckjYbwZQEa6TcaqgOLkWukagAAAABJRU5ErkJggg==");
+  background-color: #fff;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAaSURBVHgB7cAxAQAAAIIw+zckjYbwZQEa6TcaqgOLkWukagAAAABJRU5ErkJggg==");
   border: 1px solid #e2e4e8;
-  flex: 1 1 0;
-  overflow: hidden;
+  flex: 1 0 350px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 16px;
-
-  height: 400px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .diagram img {
@@ -83,4 +84,21 @@ main {
 
 .message p + p {
   margin-top: 5px;
+}
+
+.ta {
+  position: relative;
+}
+
+.ta .loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }

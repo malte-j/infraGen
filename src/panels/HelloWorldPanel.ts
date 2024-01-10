@@ -85,6 +85,24 @@ export class HelloWorldPanel {
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
       HelloWorldPanel.currentWorkspaceState = workspaceState;
+
+      // when main.tf is edited, update the diagram
+      workspace.onDidChangeTextDocument((e) => {
+        if (e.document.fileName.includes("main.tf")) {
+          exec(
+            `cat ${e.document.fileName} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
+            () => {
+              const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+              const webviewUri =
+                HelloWorldPanel.currentPanel?._panel.webview.asWebviewUri(onDiskPath);
+              HelloWorldPanel.currentPanel?._panel.webview.postMessage({
+                command: "diagram",
+                uri: webviewUri!.toString(),
+              });
+            }
+          );
+        }
+      });
     }
   }
 
@@ -209,14 +227,14 @@ export class HelloWorldPanel {
               // save the file
               document.save().then((d) => {
                 // execute terminal command using child_process
-                exec(
-                  `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
-                  () => {
-                    const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
-                    const webviewUri = webview.asWebviewUri(onDiskPath);
-                    webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
-                  }
-                );
+                // exec(
+                //   `cat ${mainTfFile[0].path} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
+                //   () => {
+                //     const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+                //     const webviewUri = webview.asWebviewUri(onDiskPath);
+                //     webview.postMessage({ command: "diagram", uri: webviewUri.toString() });
+                //   }
+                // );
               });
             });
 
