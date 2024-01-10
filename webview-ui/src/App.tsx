@@ -114,27 +114,32 @@ function App() {
           {message.type === "ai" ? <CaretAI /> : <CaretHuman />}
         </div>
       ))}
-      <VSCodeTextArea
-        value={chatInput}
-        style={{ width: "100%" }}
-        onChange={(e: any) => setChatInput(e.target!.value as any)}
-      />
-      <VSCodeButton
-        style={{
-          marginLeft: "auto",
-          marginTop: "6px",
-        }}
-        onClick={handleSendMessage}>
-        Send
-      </VSCodeButton>
-      <VSCodeButton
-        style={{
-          marginLeft: "auto",
-          marginTop: "6px",
-        }}
-        onClick={handleNewThread}>
-        New Thread
-      </VSCodeButton>
+
+      <div className="ta">
+        <VSCodeTextArea
+          value={chatInput}
+          style={{ width: "100%" }}
+          onChange={(e: any) => setChatInput(e.target!.value as any)}
+          disabled={isLoading}
+        />
+
+        {isLoading && (
+          <div className="loading">
+            <div className="spinner"></div>
+          </div>
+        )}
+      </div>
+      <div className="buttons">
+        <VSCodeButton
+          onClick={handleNewThread}>
+          New Thread
+        </VSCodeButton>
+        <VSCodeButton
+          disabled={isLoading || !chatInput}
+          onClick={handleSendMessage}>
+          Send
+        </VSCodeButton>
+      </div>
     </main>
   );
 }
