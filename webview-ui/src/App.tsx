@@ -102,11 +102,11 @@ function App() {
             <div className="spinner"></div>
           </div>
         ) : (
-          diagramUri && <img src={diagramUri} width="300" />
+          diagramUri && <img src={diagramUri} width="300" height="auto" />
         )}
       </div>
 
-      {diagramUri}
+      {/* {diagramUri} */}
 
       {messages.map((message) => (
         <div className="message" data-by={message.type}>
