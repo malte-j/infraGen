@@ -27,7 +27,10 @@ export async function getTfFile(threadId: string) {
 
   console.log(res);
 
-  const json = (await res.json()) as any;
+  const json = (await res.json()) as {
+    ts: number;
+    code: string;
+  };
 
   return json;
 }

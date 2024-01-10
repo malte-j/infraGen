@@ -192,7 +192,9 @@ export class HelloWorldPanel {
 
           case "getTfFile":
             if (!threadId) break;
+
             const modifiedTfFile = await getTfFile(threadId);
+            if (!modifiedTfFile.code) return;
 
             if (!mainTfFile[0]) {
               window.showInformationMessage("No main.tf file found");

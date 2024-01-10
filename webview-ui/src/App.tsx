@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 
 interface Message {
-  type: "ai" | "user";
+  type: "ai" | "human";
   data: {
     content: string;
   };
@@ -17,6 +17,12 @@ function App() {
   const [diagramUri, setDiagramUri] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    vscode.postMessage({
+      command: "getMessages",
+    });
+  }, []);
 
   useEffect(() => {
     vscode.postMessage({
@@ -54,7 +60,7 @@ function App() {
     }
 
     return () => {
-      interval && clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
   }, [isLoading]);
 
@@ -100,16 +106,12 @@ function App() {
         )}
       </div>
 
+      {diagramUri}
+
       {messages.map((message) => (
-        <div
-          style={{
-            background: message.type === "ai" ? "#E1F8E1" : "#EAE0FF",
-            color: message.type === "ai" ? "#08681C" : "#462093",
-            margin: "6px",
-          }}>
-          <div>
-            <Markdown>{message.data.content}</Markdown>
-          </div>
+        <div className="message" data-by={message.type}>
+          <Markdown>{message.data.content}</Markdown>
+          {message.type === "ai" ? <CaretAI /> : <CaretHuman />}
         </div>
       ))}
       <VSCodeTextArea
@@ -138,3 +140,35 @@ function App() {
 }
 
 export default App;
+
+function CaretAI() {
+  return (
+    <svg
+      className="caret"
+      width="33"
+      height="28"
+      viewBox="0 0 33 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M33 28C24.5 19.5 24 13.5 24 0H0.5C10.6884 8.12533 12.5 28 33 28Z"
+        fill="#E1F8E1"></path>
+    </svg>
+  );
+}
+
+function CaretHuman() {
+  return (
+    <svg
+      className="caret"
+      width="33"
+      height="28"
+      viewBox="0 0 33 28"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M33 28C24.5 19.5 24 13.5 24 0H0.5C10.6884 8.12533 12.5 28 33 28Z"
+        fill="#EAE0FF"></path>
+    </svg>
+  );
+}

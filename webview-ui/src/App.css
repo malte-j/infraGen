@@ -41,3 +41,43 @@ main {
     transform: rotate(360deg);
   }
 }
+
+.message {
+  padding: 10px 12px;
+  border-radius: 20px;
+  margin: 5px 10px;
+  position: relative;
+}
+
+.message[data-by="ai"] {
+  margin-right: 10%;
+  background-color: #e1f8e1;
+  color: #08681c;
+}
+.message[data-by="ai"] .caret {
+  position: absolute;
+  bottom: 0;
+  left: -5px;
+  transform: scaleX(-1);
+  z-index: -1;
+}
+
+.message[data-by="human"] {
+  margin-left: 10%;
+  background-color: #eae0ff;
+  color: #462093;
+}
+.message[data-by="human"] .caret {
+  position: absolute;
+  bottom: 0;
+  right: -5px;
+  z-index: -1;
+}
+
+.message p {
+  margin: 0;
+}
+
+.message p + p {
+  margin-top: 5px;
+}
