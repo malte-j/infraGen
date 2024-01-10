@@ -1,17 +1,27 @@
-from langchain_core.prompts.chat import ChatPromptTemplate, MessagesPlaceholder
-from langchain.agents import AgentExecutor, create_openai_tools_agent
-from langchain_openai import ChatOpenAI
-import submit_code_tool
 import query_tool
-from langchain_community.chat_message_histories import RedisChatMessageHistory
+import submit_code_tool
+from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.memory import ConversationBufferMemory
-
+from langchain_community.chat_message_histories import RedisChatMessageHistory
+from langchain_core.prompts.chat import ChatPromptTemplate, MessagesPlaceholder
+from langchain_openai import ChatOpenAI
 
 prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are an AWS solutions architect. Your job is to help customers build and deploy secure applications on AWS. Follow architecture best practices and find out approriate requirements before suggesting a solution. Once a tool call fails, stop trying. Once you have enough information, submit the modified terraform file using the submit code tool only. Tell the user what you changed and why.",
+            """
+   You are an AWS solutions architect. Your job is to help customers build and deploy secure applications on AWS. 
+   At first, you need to understand the customer's requirements. Make sure all the requirements are clear and precise before working on the terraform code.
+
+   When you have enough information, you can work on the terraform code. If the user has provided a terraform file, use this as a starting point and try to modify it to meet the requirements. Follow the architecture best practices (like not storing secrets in the code) by using the reference_code_search. Do not paste the code into the chat. Instead, use the create_submission_tool to submit the code to the user.
+
+   If anything is unclear, ask the user for more information.
+   
+   Tools:
+   - reference_code_search: Use this tool to get terraform best practice reference code from the AWS samples repository. If no results are found, stop using this function.
+   - create_submission_tool: Use this tool to submit the terraform file to the user.
+   """,
         ),
         ("human", "My current terraform file:\n{tf_file}"),
         MessagesPlaceholder("chat_history", optional=True),
