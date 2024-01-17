@@ -8,8 +8,8 @@ r = redis.Redis(host="localhost", port=6379, decode_responses=True)
 def create_submission_tool(thread_id: str):
     @tool
     def submit_modified_tf(new_code: str) -> str:
-        """Use only this function to submit the modified terraform file back to the user."""
-        print("code", new_code)
+        """Use only this function to submit the modified terraform file back to the user. Use this tool AT MOST ONCE per question."""
+        # print("code", new_code)
 
         timestamp = str(int(time.time()))
 

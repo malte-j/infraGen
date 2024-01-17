@@ -31,6 +31,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.1)
+# llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.1)
 
 
 def submit_message(thread_id: str, message: str, tf_file: str) -> None:

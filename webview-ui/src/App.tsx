@@ -74,7 +74,8 @@ function App() {
           setUpdatedFile(message.text);
           break;
         case "diagram":
-          setDiagramUri(message.uri);
+          setDiagramUri(message.uri + "?" + Date.now());
+          console.log(message.uri);
           break;
         case "messages":
           console.log(message);

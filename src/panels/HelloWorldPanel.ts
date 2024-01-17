@@ -88,6 +88,10 @@ export class HelloWorldPanel {
 
       // when main.tf is edited, update the diagram
       workspace.onDidChangeTextDocument((e) => {
+        // log using OutputChannel
+
+        console.log(e.document.fileName);
+
         if (e.document.fileName.includes("main.tf")) {
           exec(
             `cat ${e.document.fileName} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
@@ -225,7 +229,7 @@ export class HelloWorldPanel {
               if (!success) return;
 
               // save the file
-              document.save()
+              document.save();
             });
 
             webview.postMessage({ command: "tfFile", tfFile: modifiedTfFile.code });
