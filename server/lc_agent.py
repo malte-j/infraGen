@@ -6,32 +6,35 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.prompts.chat import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
+
+
+
+
+
 prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """
-   You are an AWS solutions architect. Your job is to help customers build and deploy secure applications on AWS. 
-   At first, you need to understand the customer's requirements. Make sure all the requirements are clear and precise before working on the terraform code. Try not to ask too many questions (keep it at 2-3 at a time), when the user does not answer a question just assume to the best of you knowledge. Do not give any code snippets as a response to the user.
-
-   When you have enough information, you can work on the terraform code. If the user has provided a terraform file, use this as a starting point and try to modify it to meet the requirements. Follow the architecture best practices (like not storing secrets in the code) by using the reference_code_search. Do not paste the code into the chat. Instead, use the create_submission_tool to submit the code to the user (you don't need to mention that you use the tool).
-
-   If anything is unclear, ask the user for more information.
-   
-   Tools:
-   - reference_code_search: Use this tool to get terraform best practice reference code from the AWS samples repository. If no results are found, stop using this function.
-   - create_submission_tool: Use this tool to submit the terraform file to the user.
-   """,
+            "You are an AWS solutions architect. Your job is to help customers build and deploy secure applications on AWS\n"
+            "Begin by gathering the customer's requirements. Only generate actual code once the requirements are clear enough to offer a secure solution.\n"
+            "Try not to ask too many questions (keep it at 2-3 at a time). When a user does not answer a question, assume to the best of your knowledge.\n"
+            "DO NOT send any code snippets as a direct response to the user, only use tools for this.\n"
+            "Only once you have enough information, modify the user provided terraform file to meet the requirements. .\n"
+            "Follow the architecture best practices (like not storing secrets in the code)."
+            "Do not paste the code into the chat. Instead, use the create_submission_tool to submit the code to the user (you don't need to mention that you use the tool)."
+            "If anything is unclear, ask the user for more information. Do not call any functions unless you have enough requirements.",
         ),
         ("human", "My current terraform file:\n{tf_file}"),
         MessagesPlaceholder("chat_history", optional=True),
         ("human", "{input}"),
-        "{agent_scratchpad}",
+        MessagesPlaceholder(
+            "agent_scratchpad", optional=True
+        ),  # if this throws an error, need to remove the error for this in the langchain agents code
     ]
 )
 
-llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.1)
-# llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.1)
+# llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.3)
+llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.3)
 
 
 def submit_message(thread_id: str, message: str, tf_file: str) -> None:
@@ -58,7 +61,7 @@ def submit_message(thread_id: str, message: str, tf_file: str) -> None:
     agent = create_openai_tools_agent(llm, tools, prompt)  # type: ignore # wrong type for query_tool import
 
     # Create an agent executor by passing in the agent and tools
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory, max_iterations=8, early_stopping_method="generate", return_intermediate_steps=True)  # type: ignore # wrong type for query_tool import
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, memory=memory, max_iterations=6, early_stopping_method="generate", return_intermediate_steps=True)  # type: ignore # wrong type for query_tool import
 
     # Run the agent
     agent_executor.invoke(
@@ -71,7 +74,7 @@ def submit_message(thread_id: str, message: str, tf_file: str) -> None:
 
 def get_messages(thread_id: str):
     messages = RedisChatMessageHistory(
-        url="redis://localhost:6379/0", ttl=600, session_id=thread_id
+        url="redis://localhost:6379/0", session_id=thread_id
     )
 
     return messages.messages
