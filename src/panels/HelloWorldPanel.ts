@@ -84,6 +84,9 @@ export class HelloWorldPanel {
         }
       );
 
+      // mkdir /tmp/infragen
+      exec("mkdir /tmp/infragen");
+
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
       HelloWorldPanel.currentWorkspaceState = workspaceState;
 
