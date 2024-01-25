@@ -39,12 +39,24 @@ export function App() {
     });
 
     setChatInput("");
+
+    setMessages([
+      ...messages,
+      {
+        type: "human",
+        data: {
+          content: chatInput,
+        },
+      },
+    ]);
   }
 
   function handleNewThread() {
     vscode.postMessage({
       command: "newThread",
     });
+
+    setMessages([]);
   }
 
   // while is loading, repeatedly send the getMessagesCommand
