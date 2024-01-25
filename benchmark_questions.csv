@@ -1,0 +1,15 @@
+question; question_keywords; answer_keywords;  referenced_files
+
+I want to host my django application on aws in the simplest way possible, how do I do this?; which database, containerized or not, publically available, uptime requirements; ec2, rds, lightsail; TODO
+
+I want to run my NodeJS application, which is only used during the day as an api endpoint and almost no usage except wednesdays. Also, I don't want to manage an OS; database, node version, storage, accessibility from internet ; lambda, dynamodb, s3; TODO
+
+I want to host my portfolio website, consisting of static HTML pages and some images with minimal cost and effort; dynamic content, deploy methods; s3, cloudfront, route53; TODO
+
+My projects needs to asynchronously process some data, and I want to decouple the ingestion of messages to the actual processing. I also want to be able to scale the processing independently of the ingestion; message format, message size, message frequency, message order, message retention, already in-use queue; sqs, kinesis, ecs, cloudwatch, msk(managed kafka); TODO
+
+I want to host my wordpress blog, which is used by 1000s of people daily, and I want to be able to scale it up and down depending on the traffic; database, storage, caching, load balancing, autoscaling, uptime requirements; ec2, rds, efs, elb, cloudfront, route53, cloudwatch, autoscaling; TODO
+
+How do I host my API written in Go, which connects to a large postgres database and has thousands of concurrent users, with usage peaks on the weekends?; database, scaling, familiarity with containerization; ecs, ecr, rds, cloudwatch, autoscaling; TODO
+
+I need a database for my Lambda function which is relation but has the ability to scale up and down based on very fluctuating, unpredictable demand.; database software(postgres, mysql, etc.), scaling to zero, maximum usage; aurora serverless, dynamodb; TODO

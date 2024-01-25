@@ -3,6 +3,7 @@ import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import { GraphWrapper } from "./components/GraphWrapper/GraphWrapper";
 
 interface Message {
   type: "ai" | "human";
@@ -11,9 +12,8 @@ interface Message {
   };
 }
 
-function App() {
+export function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [updatedFile, setUpdatedFile] = useState("");
   const [diagramUri, setDiagramUri] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -70,9 +70,6 @@ function App() {
       setIsLoading(false);
       const message = event.data; // The json data that the extension sent
       switch (message.command) {
-        case "tfFile":
-          setUpdatedFile(message.text);
-          break;
         case "diagram":
           setDiagramUri(message.uri + "?" + Date.now());
           console.log(message.uri);
@@ -97,11 +94,7 @@ function App() {
 
   return (
     <main className="main">
-      {diagramUri && (
-        <div className="diagram">
-          <img src={diagramUri} width="300" height="auto" />
-        </div>
-      )}
+      {diagramUri && <GraphWrapper svgUri={diagramUri} />}
 
       {messages.map((message) => (
         <div className="message" data-by={message.type}>
@@ -133,8 +126,6 @@ function App() {
     </main>
   );
 }
-
-export default App;
 
 function CaretAI() {
   return (

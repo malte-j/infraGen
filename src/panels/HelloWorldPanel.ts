@@ -14,6 +14,7 @@ import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { createThread, getMessages, getTfFile, submitMessage } from "../ai/agents";
 import { exec } from "child_process";
+import { readFile, readFileSync, writeFile } from "fs";
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -94,9 +95,26 @@ export class HelloWorldPanel {
 
         if (e.document.fileName.includes("main.tf")) {
           exec(
-            `cat ${e.document.fileName} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | dot -Tpng > /tmp/infragen/graph.png`,
+            `cat ${e.document.fileName} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | sed 's/height=1.15/height=1.4/g' | dot -Tsvg -Nfontname="Inter" > /tmp/infragen/graph.svg`,
             () => {
-              const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.png"));
+              // read svg as text file
+              const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.svg"));
+              const svgFileContent = readFileSync("/tmp/infragen/graph.svg", "utf8");
+
+              // everywhere there is a xlink:href, convert the image to a data uri
+              const dataUri = svgFileContent.replace(/xlink:href="(.+?)"/g, (match, p1) => {
+                if (p1.includes("data:image/png;base64")) return match;
+                const image = readFileSync(p1);
+                const base64 = Buffer.from(image).toString("base64");
+                return `xlink:href="data:image/png;base64,${base64}"`;
+              });
+
+              // write the svg file back to disk
+
+              writeFile("/tmp/infragen/graph.svg", dataUri, (err) => {
+                if (err) throw err;
+              });
+
               const webviewUri =
                 HelloWorldPanel.currentPanel?._panel.webview.asWebviewUri(onDiskPath);
               HelloWorldPanel.currentPanel?._panel.webview.postMessage({
