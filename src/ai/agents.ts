@@ -1,13 +1,23 @@
 import { nanoid } from "nanoid";
 
-export function createThread() {
+export function createThreadId() {
   return nanoid();
 }
 
-export function submitMessage(threadId: string, message: string, tfFile?: string) {
+export function submitMessage({
+  threadId,
+  message,
+  selectedResource,
+  tfFile,
+}: {
+  threadId: string;
+  message: string;
+  selectedResource?: string;
+  tfFile?: string;
+}) {
   return fetch("http://localhost:8000/submitMessage", {
     method: "POST",
-    body: JSON.stringify({ threadId, message, tfFile }),
+    body: JSON.stringify({ threadId, message, selectedResource, tfFile }),
     headers: { "Content-Type": "application/json" },
   });
 }

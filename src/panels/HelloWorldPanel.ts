@@ -12,9 +12,10 @@ import {
 } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
-import { createThread, getMessages, getTfFile, submitMessage } from "../ai/agents";
-import { exec } from "child_process";
-import { readFile, readFileSync, writeFile } from "fs";
+import { createThreadId, getMessages, getTfFile, submitMessage } from "../ai/agents";
+import { exec, execSync } from "child_process";
+import { readFileSync, writeFile } from "fs";
+import { UserCommmands } from "./commands";
 
 /**
  * This class manages the state and behavior of HelloWorld webview panels.
@@ -29,7 +30,7 @@ import { readFile, readFileSync, writeFile } from "fs";
 export class HelloWorldPanel {
   public static currentPanel: HelloWorldPanel | undefined;
   private static currentWorkspaceState: Memento | undefined;
-  private readonly _panel: WebviewPanel;
+  readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
 
   /**
@@ -85,47 +86,17 @@ export class HelloWorldPanel {
       );
 
       // mkdir /tmp/infragen
-      exec("mkdir /tmp/infragen");
+      execSync("mkdir -p /tmp/infragen");
 
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
       HelloWorldPanel.currentWorkspaceState = workspaceState;
 
+      generateDiagram();
+
       // when main.tf is edited, update the diagram
       workspace.onDidChangeTextDocument((e) => {
-        // log using OutputChannel
-
-        console.log(e.document.fileName);
-
         if (e.document.fileName.includes("main.tf")) {
-          exec(
-            `cat ${e.document.fileName} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | sed 's/height=1.15/height=1.4/g' | dot -Tsvg -Nfontname="Inter" > /tmp/infragen/graph.svg`,
-            () => {
-              // read svg as text file
-              const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.svg"));
-              const svgFileContent = readFileSync("/tmp/infragen/graph.svg", "utf8");
-
-              // everywhere there is a xlink:href, convert the image to a data uri
-              const dataUri = svgFileContent.replace(/xlink:href="(.+?)"/g, (match, p1) => {
-                if (p1.includes("data:image/png;base64")) return match;
-                const image = readFileSync(p1);
-                const base64 = Buffer.from(image).toString("base64");
-                return `xlink:href="data:image/png;base64,${base64}"`;
-              });
-
-              // write the svg file back to disk
-
-              writeFile("/tmp/infragen/graph.svg", dataUri, (err) => {
-                if (err) throw err;
-              });
-
-              const webviewUri =
-                HelloWorldPanel.currentPanel?._panel.webview.asWebviewUri(onDiskPath);
-              HelloWorldPanel.currentPanel?._panel.webview.postMessage({
-                command: "diagram",
-                uri: webviewUri!.toString(),
-              });
-            }
-          );
+          generateDiagram();
         }
       });
     }
@@ -196,34 +167,49 @@ export class HelloWorldPanel {
    */
   private _setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      async (message: any) => {
+      async (message: UserCommmands) => {
         const command = message.command;
-        const text = message.text;
 
         const state = HelloWorldPanel.currentWorkspaceState;
         let threadId: string | undefined = state?.get("threadId");
-        let mainTfFile = await workspace.findFiles("**/main.tf");
-        const document = await workspace.openTextDocument(mainTfFile[0]);
+        let mainTfFile = (await workspace.findFiles("**/main.tf"))[0];
+        const document = await workspace.openTextDocument(mainTfFile);
 
         switch (command) {
           case "userChatMessage":
-            // get all .tf files in the workspace
+            const { text, selectedResource } = message;
 
-            if (!mainTfFile[0]) {
+            if (!mainTfFile) {
               window.showInformationMessage("No main.tf file found");
               return;
             }
-            // get text from main.tf file
-            let tfFileContent = document.getText();
+            const tfFile = document.getText();
 
             // if no thread exists, create one
             if (!threadId) {
-              threadId = await createThread();
+              threadId = createThreadId();
               state?.update("threadId", threadId);
             }
 
+            const tsBefore = Date.now();
+
             // submit message to thread
-            submitMessage(threadId, text, tfFileContent);
+            await submitMessage({ threadId, message: text, selectedResource, tfFile });
+
+            // TODO: check if ids in same range
+
+            // wait for message to return and grab any new tf file
+            const modifiedTfFile = await getTfFile(threadId);
+
+            window.showInformationMessage(`${tsBefore} / ${modifiedTfFile.ts}`);
+
+            if (!modifiedTfFile.code || modifiedTfFile.ts < tsBefore) return;
+            const edit = new WorkspaceEdit();
+            edit.replace(mainTfFile, new Range(0, 0, 100000, 100000), modifiedTfFile.code);
+            await workspace.applyEdit(edit).then((success) => {
+              if (!success) return;
+              document.save();
+            });
 
             break;
           case "getMessages":
@@ -233,29 +219,8 @@ export class HelloWorldPanel {
             webview.postMessage({ command: "messages", messages });
             break;
 
-          case "getTfFile":
-            if (!threadId) break;
-
-            const modifiedTfFile = await getTfFile(threadId);
-            if (!modifiedTfFile.code) return;
-
-            if (!mainTfFile[0]) {
-              window.showInformationMessage("No main.tf file found");
-              return;
-            }
-
-            const edit = new WorkspaceEdit();
-            edit.replace(mainTfFile[0], new Range(0, 0, 1000, 1000), modifiedTfFile.code);
-            await workspace.applyEdit(edit).then((success) => {
-              if (!success) return;
-
-              // save the file
-              document.save();
-            });
-
-            webview.postMessage({ command: "tfFile", tfFile: modifiedTfFile.code });
           case "newThread":
-            const newThreadId = createThread();
+            const newThreadId = createThreadId();
             state?.update("threadId", newThreadId);
             break;
         }
@@ -264,4 +229,50 @@ export class HelloWorldPanel {
       this._disposables
     );
   }
+}
+
+function generateDiagram(): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    const mainTfFile = (await workspace.findFiles("**/main.tf"))[0];
+
+    if (!mainTfFile) {
+      window.showInformationMessage("No main.tf file found");
+      return resolve();
+    }
+
+    const mainTfFileUri = mainTfFile.fsPath;
+
+    exec(
+      `cat ${mainTfFileUri} | inframap generate --printer dot --hcl --clean=false | awk 'NR==2{print "bgcolor=\\"transparent\\";"}1' | sed 's/height=1.15/height=1.4/g' | dot -Tsvg -Nfontname="Inter" > /tmp/infragen/graph.svg`,
+      () => {
+        // read svg as text file
+        const svgFileContent = readFileSync("/tmp/infragen/graph.svg", "utf8");
+
+        // everywhere there is a xlink:href, convert the image to a data uri
+        const fileWithEmbeddedImages = svgFileContent.replace(
+          /xlink:href="(.+?)"/g,
+          (match, p1) => {
+            if (p1.includes("data:image/png;base64")) return match;
+            const image = readFileSync(p1);
+            const base64 = Buffer.from(image).toString("base64");
+            return `xlink:href="data:image/png;base64,${base64}"`;
+          }
+        );
+
+        // write the svg file back to disk
+        writeFile("/tmp/infragen/graph.svg", fileWithEmbeddedImages, (err) => {
+          if (err) reject(err);
+
+          const onDiskPath = Uri.joinPath(Uri.file("/tmp/infragen/graph.svg"));
+          const webviewUri = HelloWorldPanel.currentPanel?._panel.webview.asWebviewUri(onDiskPath);
+          HelloWorldPanel.currentPanel?._panel.webview.postMessage({
+            command: "diagram",
+            uri: webviewUri!.toString(),
+          });
+
+          resolve();
+        });
+      }
+    );
+  });
 }

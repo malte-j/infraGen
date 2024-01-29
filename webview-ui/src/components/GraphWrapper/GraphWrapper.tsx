@@ -3,13 +3,14 @@ import s from "./GraphWrapper.module.scss";
 
 export interface GraphWrapperProps {
   svgUri: string;
+  setSelectedResource: (resource: string) => void;
 }
 
-export const GraphWrapper = ({ svgUri }: GraphWrapperProps) => {
+export const GraphWrapper = ({ svgUri, setSelectedResource }: GraphWrapperProps) => {
   const [graphSvg, setGraphSvg] = useState<string>();
   const svgWrapperRef = useRef<HTMLDivElement>(null);
 
-  /** fetch graph svg content */
+  /** fetch svg for graph */
   useEffect(() => {
     fetch(svgUri).then(async (res) => {
       const text = await res.text();
@@ -17,26 +18,19 @@ export const GraphWrapper = ({ svgUri }: GraphWrapperProps) => {
     });
   }, [svgUri]);
 
+  function onSvgGClick(e: any) {
+    const resourceName = e.currentTarget.querySelector("title").textContent;
+    setSelectedResource(resourceName);
+  }
+
   useEffect(() => {
     if (!svgWrapperRef.current) return;
     svgWrapperRef.current.innerHTML = graphSvg || "";
     const svgGs = svgWrapperRef.current.querySelectorAll("svg g.node");
     if (!svgGs) return;
 
-    function onSvgGClick(e: any) {
-      console.log(e.currentTarget);
-      console.log(e.currentTarget.querySelector("title").textContent);
-    }
-
-    svgGs.forEach((svgG) => {
-      svgG.addEventListener("click", onSvgGClick, false);
-    });
-
-    return () => {
-      svgGs.forEach((svgG) => {
-        svgG.removeEventListener("click", onSvgGClick);
-      });
-    };
+    svgGs.forEach((svgG) => svgG.addEventListener("click", onSvgGClick, false));
+    return () => svgGs.forEach((svgG) => svgG.removeEventListener("click", onSvgGClick));
   }, [svgWrapperRef, graphSvg]);
 
   return <div className={s.graphWrapper} ref={svgWrapperRef} />;

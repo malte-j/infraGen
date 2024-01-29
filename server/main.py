@@ -18,6 +18,7 @@ class SubmitMessageRequest(BaseModel):
     threadId: str
     message: str
     tfFile: str | None = None
+    selectedResource: str | None = None
 
 
 @app.post("/submitMessage")

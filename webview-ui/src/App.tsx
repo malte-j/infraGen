@@ -17,6 +17,7 @@ export function App() {
   const [diagramUri, setDiagramUri] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedResource, setSelectedResource] = useState<string>();
 
   useEffect(() => {
     vscode.postMessage({
@@ -36,6 +37,7 @@ export function App() {
     vscode.postMessage({
       command: "userChatMessage",
       text: chatInput,
+      selectedResource: selectedResource,
     });
 
     setChatInput("");
@@ -106,7 +108,7 @@ export function App() {
 
   return (
     <main className="main">
-      {diagramUri && <GraphWrapper svgUri={diagramUri} />}
+      {diagramUri && <GraphWrapper setSelectedResource={setSelectedResource} svgUri={diagramUri} />}
 
       {messages.map((message) => (
         <div className="message" data-by={message.type}>
