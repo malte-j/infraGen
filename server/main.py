@@ -1,3 +1,4 @@
+import re
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path="../.env")
@@ -26,7 +27,12 @@ async def submitMessage(
     request: SubmitMessageRequest, background_tasks: BackgroundTasks
 ) -> None:
     tf_file = request.tfFile if request.tfFile else ""
-    lc_agent.submit_message(request.threadId, request.message, tf_file)
+    lc_agent.submit_message(
+        request.threadId,
+        request.message,
+        tf_file,
+        selected_resource=request.selectedResource,
+    )
 
 
 # Get messages from thread

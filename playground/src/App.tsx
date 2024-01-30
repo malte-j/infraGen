@@ -18,8 +18,6 @@ function App() {
     svgWrapperRef.current.innerHTML = graphSvg || "";
 
     const svgGs = svgWrapperRef.current.querySelectorAll("svg g.node");
-    console.log(svgGs);
-
     if (!svgGs) return;
 
     function onSvgGClick(e: any) {
@@ -29,6 +27,14 @@ function App() {
 
     svgGs.forEach((svgG) => {
       svgG.addEventListener("click", onSvgGClick, false);
+
+      
+      // // for every child of svgG, make cursor pointer
+      // svgG.childNodes.forEach((child) => {
+      //   if (child) {
+      //     // child.style.cursor = "pointer";
+      //   }
+      // });
     });
 
     return () => {
@@ -40,8 +46,8 @@ function App() {
 
   return (
     <div>
-            <div ref={svgWrapperRef} />
-
+      <div 
+      ref={svgWrapperRef} />
     </div>
   );
 }

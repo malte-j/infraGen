@@ -191,17 +191,14 @@ export class HelloWorldPanel {
               state?.update("threadId", threadId);
             }
 
-            const tsBefore = Date.now();
+            // get ts and round to nearest second
+            const tsBefore = Math.round(new Date().getTime() / 1000);
 
             // submit message to thread
             await submitMessage({ threadId, message: text, selectedResource, tfFile });
 
-            // TODO: check if ids in same range
-
             // wait for message to return and grab any new tf file
             const modifiedTfFile = await getTfFile(threadId);
-
-            window.showInformationMessage(`${tsBefore} / ${modifiedTfFile.ts}`);
 
             if (!modifiedTfFile.code || modifiedTfFile.ts < tsBefore) return;
             const edit = new WorkspaceEdit();

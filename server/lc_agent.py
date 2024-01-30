@@ -6,11 +6,6 @@ from langchain_community.chat_message_histories import RedisChatMessageHistory
 from langchain_core.prompts.chat import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
-
-
-
-
-
 prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -25,19 +20,25 @@ prompt = ChatPromptTemplate.from_messages(
             "If anything is unclear, ask the user for more information. Do not call any functions unless you have enough requirements.",
         ),
         ("human", "My current terraform file:\n{tf_file}"),
+        (
+            "human",
+            "I have the following resource currently selected: {selected_resource}. When I say 'this' I mean this resource.",
+        ),
         MessagesPlaceholder("chat_history", optional=True),
         ("human", "{input}"),
         MessagesPlaceholder(
             "agent_scratchpad", optional=True
-        ),  # if this throws an error, need to remove the error for this in the langchain agents code
+        ),  # if this throws an error, you need to remove the error for this in the langchain agents code
     ]
 )
 
-# llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.3)
-llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.3)
+llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.2)
+# llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.3)
 
 
-def submit_message(thread_id: str, message: str, tf_file: str) -> None:
+def submit_message(
+    thread_id: str, message: str, tf_file: str, selected_resource: str | None
+) -> None:
     tools = [
         query_tool.reference_code_search,
         submit_code_tool.create_submission_tool(thread_id),
@@ -68,6 +69,7 @@ def submit_message(thread_id: str, message: str, tf_file: str) -> None:
         {
             "input": message,
             "tf_file": tf_file,
+            "selected_resource": selected_resource,
         }
     )
 

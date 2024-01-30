@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import s from "./GraphWrapper.module.scss";
+import { cssStyle } from "./utils";
+
+export interface ResourceSelection {
+  resourceId: string;
+  nodeId: string;
+}
 
 export interface GraphWrapperProps {
   svgUri: string;
-  setSelectedResource: (resource: string) => void;
+  selectedResource: ResourceSelection | null;
+  setSelectedResource: (selection: ResourceSelection | null) => void;
 }
 
-export const GraphWrapper = ({ svgUri, setSelectedResource }: GraphWrapperProps) => {
+export const GraphWrapper = ({
+  svgUri,
+  selectedResource,
+  setSelectedResource,
+}: GraphWrapperProps) => {
   const [graphSvg, setGraphSvg] = useState<string>();
   const svgWrapperRef = useRef<HTMLDivElement>(null);
 
@@ -19,8 +30,17 @@ export const GraphWrapper = ({ svgUri, setSelectedResource }: GraphWrapperProps)
   }, [svgUri]);
 
   function onSvgGClick(e: any) {
-    const resourceName = e.currentTarget.querySelector("title").textContent;
-    setSelectedResource(resourceName);
+    const resourceId = e.currentTarget.querySelector("title").textContent;
+    const nodeId = e.currentTarget.id;
+    setSelectedResource({
+      resourceId,
+      nodeId,
+    });
+    e.stopPropagation();
+  }
+
+  function onOutsideCLick() {
+    setSelectedResource(null);
   }
 
   useEffect(() => {
@@ -30,8 +50,27 @@ export const GraphWrapper = ({ svgUri, setSelectedResource }: GraphWrapperProps)
     if (!svgGs) return;
 
     svgGs.forEach((svgG) => svgG.addEventListener("click", onSvgGClick, false));
-    return () => svgGs.forEach((svgG) => svgG.removeEventListener("click", onSvgGClick));
-  }, [svgWrapperRef, graphSvg]);
 
-  return <div className={s.graphWrapper} ref={svgWrapperRef} />;
+    svgWrapperRef.current.addEventListener("click", (e) => {
+      onOutsideCLick();
+    });
+
+    // add style from cssStyle function to div element
+
+    if (selectedResource?.resourceId) {
+      const styleElement = document.createElement("style");
+      styleElement.innerHTML = cssStyle(selectedResource.nodeId);
+      svgWrapperRef.current.prepend(styleElement);
+    }
+
+    return () => svgGs.forEach((svgG) => svgG.removeEventListener("click", onSvgGClick));
+  }, [svgWrapperRef.current, graphSvg, selectedResource]);
+
+  return (
+    <div
+      data-active-resource={selectedResource?.resourceId}
+      className={s.graphWrapper}
+      ref={svgWrapperRef}
+    />
+  );
 };

@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+
+svg g.node {
+  cursor: pointer;
+}
+
+svg g.node:hover text {
+  fill: #006d8b;
+}

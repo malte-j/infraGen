@@ -3,7 +3,11 @@ import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 import "./App.css";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { GraphWrapper } from "./components/GraphWrapper/GraphWrapper";
+import {
+  GraphWrapper,
+  GraphWrapperProps,
+  ResourceSelection,
+} from "./components/GraphWrapper/GraphWrapper";
 
 interface Message {
   type: "ai" | "human";
@@ -17,7 +21,7 @@ export function App() {
   const [diagramUri, setDiagramUri] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedResource, setSelectedResource] = useState<string>();
+  const [selectedResource, setSelectedResource] = useState<ResourceSelection | null>(null);
 
   useEffect(() => {
     vscode.postMessage({
@@ -37,7 +41,7 @@ export function App() {
     vscode.postMessage({
       command: "userChatMessage",
       text: chatInput,
-      selectedResource: selectedResource,
+      selectedResource: selectedResource?.resourceId,
     });
 
     setChatInput("");
@@ -108,7 +112,13 @@ export function App() {
 
   return (
     <main className="main">
-      {diagramUri && <GraphWrapper setSelectedResource={setSelectedResource} svgUri={diagramUri} />}
+      {diagramUri && (
+        <GraphWrapper
+          selectedResource={selectedResource}
+          setSelectedResource={setSelectedResource}
+          svgUri={diagramUri}
+        />
+      )}
 
       {messages.map((message) => (
         <div className="message" data-by={message.type}>
