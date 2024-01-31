@@ -17,7 +17,7 @@ prompt = ChatPromptTemplate.from_messages(
             "Only once you have enough information, modify the user provided terraform file to meet the requirements. .\n"
             "Follow the architecture best practices (like not storing secrets in the code)."
             "Do not paste the code into the chat. Instead, use the create_submission_tool to submit the code to the user (you don't need to mention that you use the tool)."
-            "If anything is unclear, ask the user for more information. Do not call any functions unless you have enough requirements.",
+            "If anything is unclear, ask the user for more information. DO NOT call any functions unless you have enough requirements.",
         ),
         ("human", "My current terraform file:\n{tf_file}"),
         MessagesPlaceholder("chat_history", optional=True),
@@ -32,7 +32,8 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.2)
+# llm = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.2)
+llm = ChatOpenAI(model="gpt-4-0613", temperature=0.2)
 # llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.3)
 
 
