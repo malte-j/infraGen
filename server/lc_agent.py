@@ -20,11 +20,11 @@ prompt = ChatPromptTemplate.from_messages(
             "If anything is unclear, ask the user for more information. Do not call any functions unless you have enough requirements.",
         ),
         ("human", "My current terraform file:\n{tf_file}"),
+        MessagesPlaceholder("chat_history", optional=True),
         (
             "human",
             "I have the following resource currently selected: {selected_resource}. When I say 'this' I mean this resource.",
         ),
-        MessagesPlaceholder("chat_history", optional=True),
         ("human", "{input}"),
         MessagesPlaceholder(
             "agent_scratchpad", optional=True
