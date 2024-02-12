@@ -12,7 +12,7 @@ Requirements:
 - Node 20
 - pnpm (`npm i -g pnpm`)
 - VSCode
-- Inframap ([link](https://github.com/cycloidio/inframap))
+- Inframap ([link](https://github.com/cycloidio/inframap?tab=readme-ov-file#installation))
 - Graphviz CLI ([link](https://graphviz.org/download/))
 
 1. Install JavaScript dependencies: run `pnpm i` and `(cd webview-ui && pnpm i && pnpm build)`
