@@ -51,6 +51,19 @@ export class HelloWorldPanel {
 
     // Set an event listener to listen for messages passed from the webview context
     this._setWebviewMessageListener(this._panel.webview);
+
+    // mkdir /tmp/infragen
+    execSync("mkdir -p /tmp/infragen");
+
+    generateDiagram();
+
+    if (HelloWorldPanel.currentWorkspaceState) return;
+    // when main.tf is edited, update the diagram
+    workspace.onDidChangeTextDocument((e) => {
+      if (e.document.fileName.includes("main.tf")) {
+        generateDiagram();
+      }
+    });
   }
 
   /**
@@ -84,21 +97,8 @@ export class HelloWorldPanel {
           ],
         }
       );
-
-      // mkdir /tmp/infragen
-      execSync("mkdir -p /tmp/infragen");
-
       HelloWorldPanel.currentPanel = new HelloWorldPanel(panel, extensionUri);
       HelloWorldPanel.currentWorkspaceState = workspaceState;
-
-      generateDiagram();
-
-      // when main.tf is edited, update the diagram
-      workspace.onDidChangeTextDocument((e) => {
-        if (e.document.fileName.includes("main.tf")) {
-          generateDiagram();
-        }
-      });
     }
   }
 

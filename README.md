@@ -1,37 +1,23 @@
-# Hello World (React + Vite)
+# Infragen
 
-This is an implementation of the default [Hello World](https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/default/hello-world) sample extension that demonstrates how to set up and use a [React](https://reactjs.org/) + [Vite](https://vitejs.dev/) + [Webview UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) webview extension.
+> Your AI sparring partner for cloud infrastructure
 
-![A screenshot of the sample extension.](./assets/hello-world.png)
+## Installing
 
-## Documentation
+Requirements:
+- Python 3.11
+- Node 20
+- pnpm (`npm i -g pnpm`)
+- VSCode
 
-For a deeper dive into how this sample works, read the guides below.
+1. Install JavaScript dependencies, run `pnpm i`
+2. Create a `.env` file in the root folder by copying and renaming the `.env.example` file and filling in the required values
+3. Install python dependencies, run `pip install -r requirements.txt` in the `./server` folder
+4. Add your own example terraform files to the `./server/examples` folder
+5. To generate the embedding database, run `python generate_embedding_db.py` in the `./server` folder
 
-- [Extension structure](./docs/extension-structure.md)
-- [Extension commands](./docs/extension-commands.md)
-- [Extension development cycle](./docs/extension-development-cycle.md)
+# Running
 
-## Run The Sample
-
-```bash
-# Copy sample extension locally
-npx degit microsoft/vscode-webview-ui-toolkit-samples/frameworks/hello-world-react-vite hello-world
-
-# Navigate into sample directory
-cd hello-world
-
-# Install dependencies for both the extension and webview UI source code
-npm run install:all
-
-# Build webview UI source code
-npm run build:webview
-
-# Open sample in VS Code
-code .
-```
-
-Once the sample is open inside VS Code you can run the extension by doing the following:
-
-1. Press `F5` to open a new Extension Development Host window
-2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Hello World (React + Vite): Show`
+1. Start the backend server: run `uvicorn main:app --reload` int the `./server` folder
+2. Run the extension, press `f5` while opening this folder in VSCode
+3. Open an extension window by opening the command menu (`⌘ + Shift + P`) and selecting the `Run Infragen` command 

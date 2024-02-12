@@ -1,3 +1,4 @@
 __pycache__
 chroma_db
-examples
+examples/**/*
+!examples/*.tf
