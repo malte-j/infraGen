@@ -2,6 +2,9 @@
 
 > Your AI sparring partner for cloud infrastructure
 
+<img width="1568" alt="Screenshot 2024-02-12 at 16 00 17" src="https://github.com/malte-j/infraGen/assets/12611076/8a0b2d82-6a17-4d10-842f-a9378c78c464">
+
+
 ## Installing
 
 The app is not ready for production usage or direct installation form the VSCode extension store. For now, if you want to use InfraGen, you have to set up the development environment.
@@ -12,7 +15,7 @@ Requirements:
 - Node 20
 - pnpm (`npm i -g pnpm`)
 - VSCode
-- Inframap ([link](https://github.com/cycloidio/inframap))
+- Inframap ([link](https://github.com/cycloidio/inframap?tab=readme-ov-file#installation))
 - Graphviz CLI ([link](https://graphviz.org/download/))
 
 1. Install JavaScript dependencies: run `pnpm i` and `(cd webview-ui && pnpm i && pnpm build)`
